@@ -349,7 +349,7 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
     fileprivate func updateTextStorage(parseText: Bool = true) {
         if _customizing { return }
         // clean up previous active elements
-        guard let attributedText = attributedText, attributedText.length > 0 else {
+        guard let attributedText = attributedText, attributedText.length > 0, attributedText.string != " " else {
             clearActiveElements()
             textStorage.setAttributedString(NSAttributedString())
             self.expandedText = nil
@@ -358,20 +358,22 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
             return
         }
         
-        let mutAttrString = addLineBreak(attributedText)
-        
-        if parseText {
-            clearActiveElements()
-            let newString = parseTextAndExtractActiveElements(mutAttrString)
-            mutAttrString.mutableString.setString(newString)
+        if (self.collapsedText == nil) {
+            let mutAttrString = addLineBreak(attributedText)
+            
+            if parseText {
+                clearActiveElements()
+                let newString = parseTextAndExtractActiveElements(mutAttrString)
+                mutAttrString.mutableString.setString(newString)
+            }
+            
+            addLinkAttribute(mutAttrString)
+            
+            self.collapsedText = getCollapsedText(for: mutAttrString, link: (linkHighlighted) ? collapsedAttributedLink.copyWithHighlightedColor() : self.collapsedAttributedLink)
+            self.expandedText = mutAttrString
         }
         
-        addLinkAttribute(mutAttrString)
-        
-        self.collapsedText = getCollapsedText(for: mutAttrString, link: (linkHighlighted) ? collapsedAttributedLink.copyWithHighlightedColor() : self.collapsedAttributedLink)
-        //self.expandedText = getExpandedText(for: mutAttrString, link: (linkHighlighted) ? expandedAttributedLink?.copyWithHighlightedColor() : self.expandedAttributedLink)
-    
-        if let attrString = self.collapsed ? self.collapsedText : mutAttrString {
+        if let attrString = self.collapsed ? self.collapsedText : self.expandedText {
             textStorage.setAttributedString(attrString)
             _customizing = true
             text = attrString.string
@@ -713,6 +715,11 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
             return true
         }
         return false
+    }
+    
+    @objc func resetReadMoreLess() {
+        self.collapsedText = nil
+        self.expandedText = nil
     }
     
     //MARK: - Handle UI Responder touches
