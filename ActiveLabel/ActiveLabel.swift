@@ -517,7 +517,9 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
             attributes = configureLinkAttribute(type, attributes, isSelected)
         }
         
-        textStorage.addAttributes(attributes, range: selectedElement.range)
+        if (selectedElement.range.location >= 0 && selectedElement.range.length > 0 && selectedElement.range.location + selectedElement.range.length <= textStorage.string.count) {
+            textStorage.addAttributes(attributes, range: selectedElement.range)
+        }
         
         setNeedsDisplay()
     }
